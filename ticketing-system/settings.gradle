@@ -1,0 +1,5 @@
+rootProject.name = 'ticketing-system'
+
+include 'ticketing-api'
+include 'ticketing-domain'
+include 'ticketing-infra'

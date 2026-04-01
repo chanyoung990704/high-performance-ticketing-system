@@ -1,0 +1,8 @@
+dependencies {
+    implementation project(':ticketing-domain')
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.kafka:spring-kafka'
+}
+
+bootJar { enabled = false }
+jar { enabled = true }
