@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ticketing.api.TicketingApiApplicationTests" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-04-01T13:14:59.916Z" hostname="DESKTOP-VFVF9QN" time="0.239">
+  <properties/>
+  <testcase name="redisConnectionTest()" classname="com.ticketing.api.TicketingApiApplicationTests" time="0.056"/>
+  <testcase name="databaseConnectionTest()" classname="com.ticketing.api.TicketingApiApplicationTests" time="0.06"/>
+  <testcase name="kafkaConnectionTest()" classname="com.ticketing.api.TicketingApiApplicationTests" time="0.02"/>
+  <testcase name="contextLoads()" classname="com.ticketing.api.TicketingApiApplicationTests" time="0.031"/>
+  <system-out><![CDATA[2026-04-01T22:14:59.922+09:00  INFO 14066 --- [ticketing-api] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.ticketing.api.TicketingApiApplicationTests]: TicketingApiApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-04-01T22:14:59.929+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.ticketing.api.TicketingApiApplication for test class com.ticketing.api.TicketingApiApplicationTests
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

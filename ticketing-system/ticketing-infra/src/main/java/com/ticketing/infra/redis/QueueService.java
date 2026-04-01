@@ -23,6 +23,7 @@ public class QueueService {
     private static final String QUEUE_KEY = "queue:%d";
     private static final String REMAIN_KEY = "remain:%d:%d";
     private static final String ACTIVE_KEY = "active:%d";
+    private static final String BOOKED_KEY = "booked:%d";
     private static final int ACTIVE_TOKEN_TTL = 300; // 5분
 
     private static final String DECREASE_STOCK_SCRIPT = 
@@ -81,6 +82,30 @@ public class QueueService {
         }
 
         return QueueStatusResponse.notFound();
+    }
+
+    /**
+     * 입장 허가 여부 확인
+     */
+    public boolean isAdmitted(Long eventId, Long userId) {
+        String activeKey = String.format(ACTIVE_KEY, eventId);
+        return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(activeKey, String.valueOf(userId)));
+    }
+
+    /**
+     * 중복 예매 여부 확인
+     */
+    public boolean isAlreadyBooked(Long eventId, Long userId) {
+        String bookedKey = String.format(BOOKED_KEY, eventId);
+        return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(bookedKey, String.valueOf(userId)));
+    }
+
+    /**
+     * 예매 완료 처리 (중복 방지 세트 추가)
+     */
+    public void markAsBooked(Long eventId, Long userId) {
+        String bookedKey = String.format(BOOKED_KEY, eventId);
+        redisTemplate.opsForSet().add(bookedKey, String.valueOf(userId));
     }
 
     /**

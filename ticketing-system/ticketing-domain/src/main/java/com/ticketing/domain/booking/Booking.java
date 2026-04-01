@@ -1,7 +1,6 @@
 package com.ticketing.domain.booking;
 
 import com.ticketing.domain.event.SeatGrade;
-import com.ticketing.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,9 +21,8 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(nullable = false)
+    private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_grade_id", nullable = false)
@@ -41,8 +39,8 @@ public class Booking {
     @Column(updatable = false)
     private LocalDateTime bookedAt;
 
-    public Booking(User user, SeatGrade seatGrade, BookingStatus status, int price) {
-        this.user = user;
+    public Booking(Long userId, SeatGrade seatGrade, BookingStatus status, int price) {
+        this.userId = userId;
         this.seatGrade = seatGrade;
         this.status = status;
         this.price = price;

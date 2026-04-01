@@ -62,7 +62,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">32.571s</div>
+<div class="counter">1m4.29s</div>
 <p>duration</p>
 </div>
 </td>
@@ -97,7 +97,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td>0.413s</td>
+<td>0.479s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -108,7 +108,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td>4.051s</td>
+<td>4.168s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -117,7 +117,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td>0.257s</td>
+<td>0.319s</td>
 <td class="success">100%</td>
 </tr>
 </table>
@@ -126,8 +126,8 @@
 <div class="tab">
 <h2>standard output</h2>
 <span class="code">
-<pre id="root-0-test-stdout-com.ticketing.api.QueueServiceTest">22:02:26.901 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ticketing.api.QueueServiceTest]: QueueServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-22:02:27.358 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ticketing.api.TicketingApiApplication for test class com.ticketing.api.QueueServiceTest
+<pre id="root-0-test-stdout-com.ticketing.api.QueueServiceTest">22:13:56.418 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ticketing.api.QueueServiceTest]: QueueServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+22:13:56.974 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ticketing.api.TicketingApiApplication for test class com.ticketing.api.QueueServiceTest
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -138,29 +138,29 @@
 
  :: Spring Boot ::                (v3.3.4)
 
-2026-04-01T22:02:29.582+09:00  INFO 11765 --- [ticketing-api] [    Test worker] com.ticketing.api.QueueServiceTest       : Starting QueueServiceTest using Java 21.0.6 with PID 11765 (started by chanyoungpark in /home/chanyoungpark/projects/demo/ticketing-system/ticketing-api)
-2026-04-01T22:02:29.589+09:00  INFO 11765 --- [ticketing-api] [    Test worker] com.ticketing.api.QueueServiceTest       : No active profile set, falling back to 1 default profile: &quot;default&quot;
-2026-04-01T22:02:32.767+09:00  INFO 11765 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2026-04-01T22:02:32.774+09:00  INFO 11765 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-04-01T22:02:32.835+09:00  INFO 11765 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 39 ms. Found 0 JPA repository interfaces.
-2026-04-01T22:02:32.893+09:00  INFO 11765 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2026-04-01T22:02:32.896+09:00  INFO 11765 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-04-01T22:02:32.920+09:00  INFO 11765 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
-2026-04-01T22:02:36.068+09:00  INFO 11765 --- [ticketing-api] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-04-01T22:02:36.784+09:00  INFO 11765 --- [ticketing-api] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1d06801f
-2026-04-01T22:02:36.791+09:00  INFO 11765 --- [ticketing-api] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-04-01T22:02:37.002+09:00  INFO 11765 --- [ticketing-api] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:3306/ticketing (MySQL 8.0)
-2026-04-01T22:02:37.194+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 5 migrations (execution time 00:00.118s)
-2026-04-01T22:02:37.271+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema `ticketing`: 5
-2026-04-01T22:02:37.286+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.f.core.internal.command.DbMigrate      : Schema `ticketing` is up to date. No migration necessary.
-2026-04-01T22:02:37.748+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-04-01T22:02:38.071+09:00  INFO 11765 --- [ticketing-api] [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
-2026-04-01T22:02:38.245+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-04-01T22:02:39.938+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-04-01T22:02:41.327+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-04-01T22:02:41.348+09:00  INFO 11765 --- [ticketing-api] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-04-01T22:02:49.833+09:00  INFO 11765 --- [ticketing-api] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 15 endpoints beneath base path '/actuator'
-2026-04-01T22:02:50.173+09:00  INFO 11765 --- [ticketing-api] [    Test worker] com.ticketing.api.QueueServiceTest       : Started QueueServiceTest in 22.21 seconds (process running for 31.011)
+2026-04-01T22:13:58.932+09:00  INFO 14066 --- [ticketing-api] [    Test worker] com.ticketing.api.QueueServiceTest       : Starting QueueServiceTest using Java 21.0.6 with PID 14066 (started by chanyoungpark in /home/chanyoungpark/projects/demo/ticketing-system/ticketing-api)
+2026-04-01T22:13:58.940+09:00  INFO 14066 --- [ticketing-api] [    Test worker] com.ticketing.api.QueueServiceTest       : No active profile set, falling back to 1 default profile: &quot;default&quot;
+2026-04-01T22:14:03.655+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-04-01T22:14:03.657+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-01T22:14:04.701+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1001 ms. Found 3 JPA repository interfaces.
+2026-04-01T22:14:07.283+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-04-01T22:14:07.288+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-04-01T22:14:07.394+09:00  INFO 14066 --- [ticketing-api] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 63 ms. Found 0 Redis repository interfaces.
+2026-04-01T22:14:12.578+09:00  INFO 14066 --- [ticketing-api] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-01T22:14:14.865+09:00  INFO 14066 --- [ticketing-api] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3c98981e
+2026-04-01T22:14:14.902+09:00  INFO 14066 --- [ticketing-api] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-01T22:14:15.724+09:00  INFO 14066 --- [ticketing-api] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:3306/ticketing (MySQL 8.0)
+2026-04-01T22:14:16.809+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 5 migrations (execution time 00:00.463s)
+2026-04-01T22:14:16.892+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema `ticketing`: 5
+2026-04-01T22:14:16.906+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.f.core.internal.command.DbMigrate      : Schema `ticketing` is up to date. No migration necessary.
+2026-04-01T22:14:17.980+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-01T22:14:19.024+09:00  INFO 14066 --- [ticketing-api] [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-04-01T22:14:19.341+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-01T22:14:22.905+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-01T22:14:31.804+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-01T22:14:32.116+09:00  INFO 14066 --- [ticketing-api] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-01T22:14:53.559+09:00  INFO 14066 --- [ticketing-api] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 15 endpoints beneath base path '/actuator'
+2026-04-01T22:14:54.228+09:00  INFO 14066 --- [ticketing-api] [    Test worker] com.ticketing.api.QueueServiceTest       : Started QueueServiceTest in 56.677 seconds (process running for 64.212)
 </pre>
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-com.ticketing.api.QueueServiceTest">Copy</button>
 </span>
@@ -175,7 +175,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.3.0</a> at Apr 1, 2026, 10:02:55 PM</p>
+<a href="https://www.gradle.org">Gradle 9.3.0</a> at Apr 1, 2026, 10:15:00 PM</p>
 </div>
 </div>
 </body>
