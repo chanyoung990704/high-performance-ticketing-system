@@ -1,0 +1,18 @@
+ext.pathMapper = [:]
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/util_rt.jar', '/tmp/jYiChg/util_rt.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/external-system-rt.jar', '/tmp/jYiChg/external-system-rt.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/plugins/gradle-plugin/lib/gradle-tooling-extension-api.jar', '/tmp/F9lnWY/gradle-tooling-extension-api.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/plugins/gradle-plugin/lib/gradle-tooling-extension-impl.jar', '/tmp/F9lnWY/gradle-tooling-extension-impl.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/util-8.jar', '/tmp/jYiChg/util-8.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/intellij.libraries.gson.jar', '/tmp/jYiChg/intellij.libraries.gson.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/intellij.libraries.ion.jar', '/tmp/jYiChg/intellij.libraries.ion.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/intellij.libraries.guava.jar', '/tmp/jYiChg/intellij.libraries.guava.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/intellij.libraries.commons.lang3.jar', '/tmp/jYiChg/intellij.libraries.commons.lang3.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/trove.jar', '/tmp/jYiChg/trove.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/lib/opentelemetry.jar', '/tmp/jYiChg/opentelemetry.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/plugins/micronaut/lib/modules/intellij.micronaut.gradle.tooling.jar', '/tmp/ainxNs/intellij.micronaut.gradle.tooling.jar')
+ext.pathMapper.put('C:/Users/chanyoungpark/AppData/Roaming/JetBrains/IntelliJIdea2026.1/plugins/Kotlin/lib/kotlin-gradle-tooling.jar', '/tmp/WH6Om1/kotlin-gradle-tooling.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/plugins/ktor/lib/modules/intellij.ktor.run.gradle.tooling.jar', '/tmp/iD2kJ2/intellij.ktor.run.gradle.tooling.jar')
+ext.pathMapper.put('C:/Program Files/JetBrains/IntelliJ IDEA 2025.1.3/plugins/compose-ide-plugin/lib/modules/intellij.compose.ide.plugin.gradleTooling.rt.jar', '/tmp/5pBJTr/intellij.compose.ide.plugin.gradleTooling.rt.jar')
+ext.pathMapper.put("<<target java executable path>>", '/usr/lib/jvm/java-1.21.0-openjdk-amd64/bin/java')
+ext.mapPath = { path -> pathMapper.get(path) ?: path }
