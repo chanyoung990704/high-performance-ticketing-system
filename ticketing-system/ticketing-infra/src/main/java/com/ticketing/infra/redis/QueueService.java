@@ -47,6 +47,24 @@ public class QueueService {
     }
 
     /**
+     * 모든 활성 이벤트의 대기열을 1초마다 처리 (테스트용 자동 승인)
+     */
+    @Scheduled(fixedDelay = 1000)
+    public void scheduleQueueProcess() {
+        Set<String> keys = redisTemplate.keys("queue:*");
+        if (keys == null) return;
+
+        for (String key : keys) {
+            try {
+                Long eventId = Long.parseLong(key.split(":")[1]);
+                processQueue(eventId, 10); // 한 번에 10명씩 승인
+            } catch (Exception e) {
+                log.error("Failed to process queue for key: {}", key, e);
+            }
+        }
+    }
+
+    /**
      * 대기열 처리 (스케줄러 호출용)
      */
     public void processQueue(Long eventId, int batchSize) {
