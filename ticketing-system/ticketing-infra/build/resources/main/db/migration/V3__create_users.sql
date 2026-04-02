@@ -1,6 +1,0 @@
-CREATE TABLE users (
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    email       VARCHAR(100) NOT NULL UNIQUE,
-    name        VARCHAR(50) NOT NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-);
