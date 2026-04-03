@@ -18,6 +18,11 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticketing.domain.outbox.OutboxEvent;
+import com.ticketing.domain.outbox.OutboxRepository;
+
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -25,7 +30,8 @@ public class BookingService {
     private final QueueService queueService;
     private final BookingRepository bookingRepository;
     private final SeatGradeRepository seatGradeRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public BookingResponse createBooking(Long userId, BookingRequest request) {
@@ -55,9 +61,15 @@ public class BookingService {
         Booking booking = new Booking(userId, seatGrade, BookingStatus.PENDING, seatGrade.getPrice());
         bookingRepository.save(booking);
 
-        // 5. Kafka 이벤트 발행 (비동기 처리를 위함)
-        kafkaTemplate.send("booking-created", String.valueOf(userId),
-                BookingEvent.of(booking.getId(), userId, eventId, gradeId));
+        // 5. Outbox 이벤트 저장 (Kafka 직접 전송 제거)
+        try {
+            BookingEvent event = BookingEvent.of(booking.getId(), userId, eventId, gradeId);
+            String payload = objectMapper.writeValueAsString(event);
+            OutboxEvent outboxEvent = new OutboxEvent("BOOKING", booking.getId(), payload);
+            outboxRepository.save(outboxEvent);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("이벤트 페이로드 생성 실패", e);
+        }
 
         // 6. 중복 예매 방지 Set에 추가
         queueService.markAsBooked(eventId, userId);
