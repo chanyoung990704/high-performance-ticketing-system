@@ -25,3 +25,5 @@ Thumbs.db
 bin/
 out/
 temp/
+application-local.yml
+*.jtl

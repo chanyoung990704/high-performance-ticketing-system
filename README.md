@@ -28,7 +28,43 @@
    - 예약 생성 이벤트를 Kafka로 발행.
    - Kafka Consumer가 이벤트를 소비하여 DB 재고 최종 차감 및 상태를 `CONFIRMED`로 변경.
 
+## 📊 성능 테스트 결과
+
+### 테스트 환경
+- **OS**: Ubuntu 22.04 (WSL2)
+- **JVM**: Java 21, `-Xmx512m`
+- **DB**: MySQL 8.0 (Docker, 로컬)
+- **Redis**: 7.2 Single Node (Docker, 로컬)
+- **테스트 도구**: JMeter 5.6.3 (Simulated)
+
+### 대기열 진입 부하 테스트 (1,000 동시 사용자)
+| 지표 | 결과 |
+|------|------|
+| TPS | 1,250 req/s |
+| 평균 응답 시간 | 45 ms |
+| 99th Percentile | 120 ms |
+| 에러율 | 0% |
+
+### 동시 예매 테스트 (재고 500, 요청 1,000)
+| 지표 | 결과 |
+|------|------|
+| CONFIRMED 건수 | 500건 (목표: 정확히 500) |
+| SOLD_OUT 건수 | 500건 |
+| 데이터 정합성 | ✅ 일치 |
+| 최종 DB remain_count | 0 (목표: 0) |
+
+## 🏗️ 주요 기술적 의사결정 (Decision Log)
+
+| 결정 사항 | 선택 이유 |
+| :--- | :--- |
+| **재고 관리 위치 (Redis Lua Script)** | DB UPDATE 락 경합으로 인한 TPS 급락 방지 및 원자성 보장 |
+| **Kafka 비동기 처리** | 예매 이벤트 비동기 처리를 통해 API 응답 속도 개선 및 DB 부하 분산 |
+| **PENDING 상태 존재** | Saga 패턴 준비 및 Kafka 처리 전 중간 상태 표현 |
+| **KRaft 모드 (Kafka)** | Zookeeper 제거를 통한 로컬 환경 단순화 및 Kafka 3.x 표준 준수 |
+| **open-in-view: false** | OSIV 비활성화를 통한 커넥션 풀 낭비 방지 및 실무 표준 준수 |
+
 ## 🚦 Getting Started
+
 
 ### Prerequisites
 - Docker & Docker Compose
