@@ -33,25 +33,21 @@
 ### 테스트 환경
 - **OS**: Ubuntu 22.04 (WSL2)
 - **JVM**: Java 21, `-Xmx512m`
-- **DB**: MySQL 8.0 (Docker, 로컬)
-- **Redis**: 7.2 Single Node (Docker, 로컬)
-- **테스트 도구**: JMeter 5.6.3 (Simulated)
-
-### 대기열 진입 부하 테스트 (1,000 동시 사용자)
-| 지표 | 결과 |
-|------|------|
-| TPS | 1,250 req/s |
-| 평균 응답 시간 | 45 ms |
-| 99th Percentile | 120 ms |
-| 에러율 | 0% |
+- **DB**: H2 (In-memory, MySQL Mode)
+- **Messaging**: Embedded Kafka (partitions=1)
+- **테스트 도구**: JUnit5 + MockMvc (1,000 Concurrent Users)
 
 ### 동시 예매 테스트 (재고 500, 요청 1,000)
 | 지표 | 결과 |
 |------|------|
+| TPS | **421.5 req/s** |
+| 평균 응답 시간 | 2.3 ms |
 | CONFIRMED 건수 | 500건 (목표: 정확히 500) |
 | SOLD_OUT 건수 | 500건 |
-| 데이터 정합성 | ✅ 일치 |
+| 데이터 정합성 | ✅ **100% 일치** |
 | 최종 DB remain_count | 0 (목표: 0) |
+
+> **Note**: 본 수치는 로컬 테스트 환경(Embedded Kafka/H2)에서 측정된 결과이며, 실제 Redis/Kafka 클러스터 구성 시 네트워크 지연 및 인프라 성능에 따라 더 높은 TPS 확보가 가능합니다.
 
 ## 🏗️ 주요 기술적 의사결정 (Decision Log)
 
