@@ -71,12 +71,57 @@ public class PerformanceLoadTest {
             batchArgs.add(new Object[]{ (long)i, "user" + i + "@test.com", "Tester" + i });
         }
         jdbcTemplate.batchUpdate(sql, batchArgs);
+    }
 
-        // QueueService Mocking
+    @Test
+    @DisplayName("시나리오 1: 대기열 진입 부하 테스트 (1,000명 동시)")
+    void testQueueEnterPerformance() throws InterruptedException {
+        int userCount = 1000;
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        CountDownLatch latch = new CountDownLatch(userCount);
+        
+        // enterQueue는 long(rank) 반환
+        when(queueService.enterQueue(anyLong(), anyLong())).thenReturn(0L);
+
+        long startTime = System.currentTimeMillis();
+        for (int i = 1; i <= userCount; i++) {
+            final long userId = i;
+            executorService.execute(() -> {
+                try {
+                    String content = "{\"userId\": " + userId + "}";
+                    mockMvc.perform(post("/api/v1/queues/1/enter")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(content));
+                } catch (Exception ignored) {
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await();
+        long duration = System.currentTimeMillis() - startTime;
+
+        System.out.println(">>> [SCENARIO 1] QUEUE ENTER RESULT <<<");
+        System.out.println("Total Requests: 1000");
+        System.out.println("Duration: " + duration + " ms");
+        System.out.println("TPS: " + (userCount / (duration / 1000.0)));
+        System.out.println("Average Response Time: " + (duration / (double)userCount) + " ms");
+    }
+
+    @Test
+    @DisplayName("시나리오 2: 동시 예매 부하 테스트 (재고 500, 요청 1,000)")
+    void testBookingPerformance() throws InterruptedException {
+        int userCount = 1000;
+        int stockCount = 500;
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        CountDownLatch latch = new CountDownLatch(userCount);
+        
+        AtomicInteger successCount = new AtomicInteger();
+        
+        // 필수 Mocking
         when(queueService.isAdmitted(anyLong(), anyLong())).thenReturn(true);
         when(queueService.isAlreadyBooked(anyLong(), anyLong())).thenReturn(false);
         
-        // 원자적 재고 감소 시뮬레이션 (500개까지만 성공)
         AtomicInteger mockStock = new AtomicInteger(500);
         when(queueService.decreaseStock(anyLong(), anyLong())).thenAnswer(invocation -> {
             int current = mockStock.get();
@@ -85,21 +130,8 @@ public class PerformanceLoadTest {
             }
             return false;
         });
-    }
-
-    @Test
-    @DisplayName("시나리오: 1,000명 동시 예매 시도 (재고 500개) - 비동기 처리 정합성 검증")
-    void testPerformance() throws InterruptedException {
-        int userCount = 1000;
-        int stockCount = 500;
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
-        CountDownLatch latch = new CountDownLatch(userCount);
-        
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger failCount = new AtomicInteger();
 
         long startTime = System.currentTimeMillis();
-
         for (int i = 1; i <= userCount; i++) {
             final long userId = i;
             executorService.execute(() -> {
@@ -112,42 +144,32 @@ public class PerformanceLoadTest {
                             .andDo(result -> {
                                 if (result.getResponse().getStatus() == 200) {
                                     successCount.incrementAndGet();
-                                } else {
-                                    failCount.incrementAndGet();
                                 }
                             });
                 } catch (Exception ignored) {
-                    failCount.incrementAndGet();
                 } finally {
                     latch.countDown();
                 }
             });
         }
-
         latch.await();
-        long endTime = System.currentTimeMillis();
-        
-        System.out.println("================ PERFORMANCE RESULT ================");
-        System.out.println("Total Time: " + (endTime - startTime) + " ms");
-        System.out.println("Success (200 OK): " + successCount.get());
-        System.out.println("Fail (Sold Out/Error): " + failCount.get());
-        System.out.println("Throughput (TPS): " + (userCount / ((endTime - startTime) / 1000.0)));
-        System.out.println("====================================================");
+        long duration = System.currentTimeMillis() - startTime;
 
-        // Kafka Consumer의 비동기 처리를 위해 대기
+        System.out.println(">>> [SCENARIO 2] BOOKING PROCESS START <<<");
+        System.out.println("Wait for Async Kafka processing...");
         Thread.sleep(10000); 
 
-        long confirmedCount = bookingRepository.findAll().stream()
-                .filter(b -> b.getStatus() == BookingStatus.CONFIRMED)
-                .count();
-        
+        long confirmedCount = bookingRepository.findAll().stream().filter(b -> b.getStatus() == BookingStatus.CONFIRMED).count();
         int remainCount = seatGradeRepository.findById(1L).get().getRemainCount();
 
-        System.out.println("DB Results -> Confirmed: " + confirmedCount + ", Remain: " + remainCount);
+        System.out.println(">>> [SCENARIO 2] BOOKING RESULT <<<");
+        System.out.println("Total Requests: 1000 (Target Stock: 500)");
+        System.out.println("Duration (Requesting): " + duration + " ms");
+        System.out.println("TPS: " + (userCount / (duration / 1000.0)));
+        System.out.println("Confirmed in DB: " + confirmedCount + ", Remaining Stock: " + remainCount);
 
-        // 최종 검증
-        assertThat(successCount.get()).isEqualTo(stockCount); // API 성공 응답 수
-        assertThat(confirmedCount).isEqualTo(stockCount);    // DB 최종 확정 수
-        assertThat(remainCount).isZero();                    // DB 재고 소진
+        assertThat(successCount.get()).isEqualTo(stockCount);
+        assertThat(confirmedCount).isEqualTo(stockCount);
+        assertThat(remainCount).isZero();
     }
 }
