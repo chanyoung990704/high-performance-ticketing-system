@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class OutboxRelay {
 
     private final OutboxRepository outboxRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @Scheduled(fixedDelay = 500)
     @Transactional
@@ -30,8 +34,10 @@ public class OutboxRelay {
 
         for (OutboxEvent event : events) {
             try {
-                // aggregateId를 키로 사용하여 순서 보장 (필요시)
-                kafkaTemplate.send("booking-created", String.valueOf(event.getAggregateId()), event.getPayload());
+                JsonNode jsonNode = objectMapper.readTree(event.getPayload());
+                String partitionKey = jsonNode.get("eventId").asText();
+
+                kafkaTemplate.send("booking-created", partitionKey, event.getPayload());
                 event.markAsSent();
             } catch (Exception e) {
                 log.error("Failed to relay outbox event: id={}", event.getId(), e);
