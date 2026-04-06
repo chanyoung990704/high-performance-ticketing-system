@@ -31,6 +31,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+import static org.mockito.Mockito.*;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -45,6 +47,10 @@ public class PerformanceLoadTest {
 
     @Autowired
     private BookingRepository bookingRepository;
+    
+    // Repository를 Spy하여 예외 상황을 시뮬레이션하기 위함
+    @org.springframework.boot.test.mock.mockito.SpyBean
+    private BookingRepository spyBookingRepository;
 
     @Autowired
     private SeatGradeRepository seatGradeRepository;
@@ -52,6 +58,9 @@ public class PerformanceLoadTest {
     @MockBean
     private QueueService queueService;
 
+    @Autowired
+    private com.ticketing.api.service.BookingService bookingService;
+    
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -71,6 +80,36 @@ public class PerformanceLoadTest {
             batchArgs.add(new Object[]{ (long)i, "user" + i + "@test.com", "Tester" + i });
         }
         jdbcTemplate.batchUpdate(sql, batchArgs);
+
+        // 기본 Mocking
+        when(queueService.isAdmitted(anyLong(), anyLong())).thenReturn(true);
+        when(queueService.isAlreadyBooked(anyLong(), anyLong())).thenReturn(false);
+    }
+
+    @Test
+    @DisplayName("시나리오 3: DB 저장 실패 시 Redis 재고 복구(보상 트랜잭션) 검증")
+    void testBookingRollbackRestoresStock() {
+        // Given
+        Long userId = 1L;
+        BookingRequest request = new BookingRequest(userId, 1L, 1L);
+        
+        // Redis 재고 감소는 성공했다고 가정
+        when(queueService.decreaseStock(anyLong(), anyLong())).thenReturn(true);
+        
+        // DB 저장 시 의도적으로 예외 발생
+        doThrow(new RuntimeException("DB Connection Error")).when(spyBookingRepository).save(any());
+
+        // When
+        try {
+            bookingService.createBooking(userId, request);
+        } catch (Exception e) {
+            // Then
+            System.out.println("Expected exception caught: " + e.getMessage());
+        }
+
+        // After completion (Rollback), increaseStock must be called
+        verify(queueService, times(1)).increaseStock(eq(1L), eq(1L));
+        System.out.println(">>> [RESILIENCE TEST] Redis stock increaseStock() was successfully called after rollback.");
     }
 
     @Test
