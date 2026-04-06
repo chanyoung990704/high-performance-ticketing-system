@@ -127,6 +127,14 @@ public class QueueService {
     }
 
     /**
+     * Redis 재고 복구 (트랜잭션 롤백 시 사용)
+     */
+    public void increaseStock(Long eventId, Long gradeId) {
+        String key = String.format(REMAIN_KEY, eventId, gradeId);
+        redisTemplate.opsForValue().increment(key);
+    }
+
+    /**
      * Lua Script 기반 원자적 재고 감소
      */
     public boolean decreaseStock(Long eventId, Long gradeId) {

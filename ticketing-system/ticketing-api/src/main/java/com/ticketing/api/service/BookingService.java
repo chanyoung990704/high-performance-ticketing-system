@@ -23,6 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketing.domain.outbox.OutboxEvent;
 import com.ticketing.domain.outbox.OutboxRepository;
 
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -53,6 +56,16 @@ public class BookingService {
         if (!stockDecreased) {
             throw new SoldOutException("매진되었습니다.");
         }
+
+        // [실무 패턴] 트랜잭션 롤백 시 Redis 재고 복구 등록
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
+                    queueService.increaseStock(eventId, gradeId);
+                }
+            }
+        });
 
         // 4. PENDING 상태로 예매 레코드 저장
         SeatGrade seatGrade = seatGradeRepository.findById(gradeId)
