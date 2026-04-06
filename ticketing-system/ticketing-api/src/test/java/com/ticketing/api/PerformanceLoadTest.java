@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.springframework.context.annotation.Import(TestRedisConfig.class)
 @EmbeddedKafka(partitions = 9, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
 public class PerformanceLoadTest {
 
@@ -77,7 +78,7 @@ public class PerformanceLoadTest {
 
         String sql = "INSERT INTO users (id, email, name) VALUES (?, ?, ?)";
         List<Object[]> batchArgs = new ArrayList<>();
-        for (int i = 1; i <= 1000; i++) {
+        for (int i = 1; i <= 10000; i++) {
             batchArgs.add(new Object[]{(long) i, "user" + i + "@test.com", "Tester" + i});
         }
         jdbcTemplate.batchUpdate(sql, batchArgs);
@@ -87,10 +88,10 @@ public class PerformanceLoadTest {
     }
 
     @Test
-    @DisplayName("시나리오 1: 대기열 진입 부하 테스트 (1,000명 동시)")
+    @DisplayName("시나리오 1: 대기열 진입 부하 테스트 (10,000명 동시)")
     void testScenario1_QueueEnter() throws InterruptedException {
-        int userCount = 1000;
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        int userCount = 10000;
+        ExecutorService executorService = Executors.newFixedThreadPool(200);
         CountDownLatch latch = new CountDownLatch(userCount);
         when(queueService.enterQueue(anyLong(), anyLong())).thenReturn(0L);
 
@@ -112,17 +113,24 @@ public class PerformanceLoadTest {
     }
 
     @Test
-    @DisplayName("시나리오 2: 동시 예매 부하 테스트 (재고 500, 요청 1,000)")
+    @DisplayName("시나리오 2: 동시 예매 부하 테스트 (재고 500, 요청 10,000)")
     void testScenario2_BookingPerformance() throws InterruptedException {
-        int userCount = 1000;
+        int userCount = 10000;
         int stockCount = 500;
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        ExecutorService executorService = Executors.newFixedThreadPool(200);
         CountDownLatch latch = new CountDownLatch(userCount);
         AtomicInteger successCount = new AtomicInteger();
         
         AtomicInteger mockStock = new AtomicInteger(500);
-        when(queueService.decreaseStock(anyLong(), anyLong())).thenAnswer(invocation -> mockStock.decrementAndGet() >= 0);
+        when(queueService.decreaseStock(anyLong(), anyLong())).thenAnswer(invocation -> {
+            int current = mockStock.get();
+            if (current > 0) {
+                return mockStock.decrementAndGet() >= 0;
+            }
+            return false;
+        });
 
+        long startTime = System.currentTimeMillis();
         for (int i = 1; i <= userCount; i++) {
             final long userId = i;
             executorService.execute(() -> {
@@ -137,10 +145,14 @@ public class PerformanceLoadTest {
             });
         }
         latch.await();
-        Thread.sleep(10000); 
+        long requestDuration = System.currentTimeMillis() - startTime;
+
+        System.out.println(">>> [SCENARIO 2] REQUEST TPS: " + (userCount / (requestDuration / 1000.0)));
+        System.out.println("Wait for Async Kafka processing (20s)...");
+        Thread.sleep(20000); 
 
         long confirmedCount = bookingRepository.findAll().stream().filter(b -> b.getStatus() == BookingStatus.CONFIRMED).count();
-        System.out.println(">>> [SCENARIO 2] Success: " + successCount.get() + ", Confirmed: " + confirmedCount);
+        System.out.println(">>> [SCENARIO 2] Success Response: " + successCount.get() + ", Final Confirmed in DB: " + confirmedCount);
         
         assertThat(successCount.get()).isEqualTo(stockCount);
         assertThat(confirmedCount).isEqualTo(stockCount);

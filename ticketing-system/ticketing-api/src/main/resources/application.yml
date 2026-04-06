@@ -7,6 +7,14 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+  datasource:
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      connection-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: TicketingPool
   jpa:
     hibernate:
       ddl-auto: validate
@@ -15,17 +23,32 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+  threads:
+    virtual:
+      enabled: true
   kafka:
     consumer:
       group-id: ticketing-group
       auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 100
+      fetch-min-size: 1024
+      fetch-max-wait: 500
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.ticketing.api.dto"
     producer:
+      batch-size: 65536
+      linger-ms: 5
+      buffer-memory: 33554432
+      compression-type: snappy
+      acks: 1
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+      poll-timeout: 3000
 
 management:
   endpoints:
