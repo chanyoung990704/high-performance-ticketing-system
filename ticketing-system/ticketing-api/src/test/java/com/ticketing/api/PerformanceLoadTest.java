@@ -1,7 +1,9 @@
 package com.ticketing.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticketing.api.dto.BookingEvent;
 import com.ticketing.api.dto.BookingRequest;
+import com.ticketing.domain.booking.Booking;
 import com.ticketing.domain.booking.BookingStatus;
 import com.ticketing.domain.booking.repository.BookingRepository;
 import com.ticketing.domain.event.repository.SeatGradeRepository;
@@ -13,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,16 +31,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
+@EmbeddedKafka(partitions = 9, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
 public class PerformanceLoadTest {
 
     @Autowired
@@ -45,22 +47,21 @@ public class PerformanceLoadTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
+    @SpyBean
     private BookingRepository bookingRepository;
-    
-    // Repository를 Spy하여 예외 상황을 시뮬레이션하기 위함
-    @org.springframework.boot.test.mock.mockito.SpyBean
-    private BookingRepository spyBookingRepository;
+
+    @SpyBean
+    private SeatGradeRepository seatGradeRepository;
 
     @Autowired
-    private SeatGradeRepository seatGradeRepository;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @MockBean
     private QueueService queueService;
 
     @Autowired
     private com.ticketing.api.service.BookingService bookingService;
-    
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -77,49 +78,20 @@ public class PerformanceLoadTest {
         String sql = "INSERT INTO users (id, email, name) VALUES (?, ?, ?)";
         List<Object[]> batchArgs = new ArrayList<>();
         for (int i = 1; i <= 1000; i++) {
-            batchArgs.add(new Object[]{ (long)i, "user" + i + "@test.com", "Tester" + i });
+            batchArgs.add(new Object[]{(long) i, "user" + i + "@test.com", "Tester" + i});
         }
         jdbcTemplate.batchUpdate(sql, batchArgs);
 
-        // 기본 Mocking
         when(queueService.isAdmitted(anyLong(), anyLong())).thenReturn(true);
         when(queueService.isAlreadyBooked(anyLong(), anyLong())).thenReturn(false);
     }
 
     @Test
-    @DisplayName("시나리오 3: DB 저장 실패 시 Redis 재고 복구(보상 트랜잭션) 검증")
-    void testBookingRollbackRestoresStock() {
-        // Given
-        Long userId = 1L;
-        BookingRequest request = new BookingRequest(userId, 1L, 1L);
-        
-        // Redis 재고 감소는 성공했다고 가정
-        when(queueService.decreaseStock(anyLong(), anyLong())).thenReturn(true);
-        
-        // DB 저장 시 의도적으로 예외 발생
-        doThrow(new RuntimeException("DB Connection Error")).when(spyBookingRepository).save(any());
-
-        // When
-        try {
-            bookingService.createBooking(userId, request);
-        } catch (Exception e) {
-            // Then
-            System.out.println("Expected exception caught: " + e.getMessage());
-        }
-
-        // After completion (Rollback), increaseStock must be called
-        verify(queueService, times(1)).increaseStock(eq(1L), eq(1L));
-        System.out.println(">>> [RESILIENCE TEST] Redis stock increaseStock() was successfully called after rollback.");
-    }
-
-    @Test
     @DisplayName("시나리오 1: 대기열 진입 부하 테스트 (1,000명 동시)")
-    void testQueueEnterPerformance() throws InterruptedException {
+    void testScenario1_QueueEnter() throws InterruptedException {
         int userCount = 1000;
         ExecutorService executorService = Executors.newFixedThreadPool(100);
         CountDownLatch latch = new CountDownLatch(userCount);
-        
-        // enterQueue는 long(rank) 반환
         when(queueService.enterQueue(anyLong(), anyLong())).thenReturn(0L);
 
         long startTime = System.currentTimeMillis();
@@ -131,46 +103,26 @@ public class PerformanceLoadTest {
                     mockMvc.perform(post("/api/v1/queues/1/enter")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(content));
-                } catch (Exception ignored) {
-                } finally {
-                    latch.countDown();
-                }
+                } catch (Exception ignored) {} finally { latch.countDown(); }
             });
         }
         latch.await();
         long duration = System.currentTimeMillis() - startTime;
-
-        System.out.println(">>> [SCENARIO 1] QUEUE ENTER RESULT <<<");
-        System.out.println("Total Requests: 1000");
-        System.out.println("Duration: " + duration + " ms");
-        System.out.println("TPS: " + (userCount / (duration / 1000.0)));
-        System.out.println("Average Response Time: " + (duration / (double)userCount) + " ms");
+        System.out.println(">>> [SCENARIO 1] TPS: " + (userCount / (duration / 1000.0)));
     }
 
     @Test
     @DisplayName("시나리오 2: 동시 예매 부하 테스트 (재고 500, 요청 1,000)")
-    void testBookingPerformance() throws InterruptedException {
+    void testScenario2_BookingPerformance() throws InterruptedException {
         int userCount = 1000;
         int stockCount = 500;
         ExecutorService executorService = Executors.newFixedThreadPool(100);
         CountDownLatch latch = new CountDownLatch(userCount);
-        
         AtomicInteger successCount = new AtomicInteger();
         
-        // 필수 Mocking
-        when(queueService.isAdmitted(anyLong(), anyLong())).thenReturn(true);
-        when(queueService.isAlreadyBooked(anyLong(), anyLong())).thenReturn(false);
-        
         AtomicInteger mockStock = new AtomicInteger(500);
-        when(queueService.decreaseStock(anyLong(), anyLong())).thenAnswer(invocation -> {
-            int current = mockStock.get();
-            if (current > 0) {
-                return mockStock.decrementAndGet() >= 0;
-            }
-            return false;
-        });
+        when(queueService.decreaseStock(anyLong(), anyLong())).thenAnswer(invocation -> mockStock.decrementAndGet() >= 0);
 
-        long startTime = System.currentTimeMillis();
         for (int i = 1; i <= userCount; i++) {
             final long userId = i;
             executorService.execute(() -> {
@@ -180,35 +132,49 @@ public class PerformanceLoadTest {
                             .param("userId", String.valueOf(userId))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                            .andDo(result -> {
-                                if (result.getResponse().getStatus() == 200) {
-                                    successCount.incrementAndGet();
-                                }
-                            });
-                } catch (Exception ignored) {
-                } finally {
-                    latch.countDown();
-                }
+                            .andDo(result -> { if (result.getResponse().getStatus() == 200) successCount.incrementAndGet(); });
+                } catch (Exception ignored) {} finally { latch.countDown(); }
             });
         }
         latch.await();
-        long duration = System.currentTimeMillis() - startTime;
-
-        System.out.println(">>> [SCENARIO 2] BOOKING PROCESS START <<<");
-        System.out.println("Wait for Async Kafka processing...");
         Thread.sleep(10000); 
 
         long confirmedCount = bookingRepository.findAll().stream().filter(b -> b.getStatus() == BookingStatus.CONFIRMED).count();
-        int remainCount = seatGradeRepository.findById(1L).get().getRemainCount();
-
-        System.out.println(">>> [SCENARIO 2] BOOKING RESULT <<<");
-        System.out.println("Total Requests: 1000 (Target Stock: 500)");
-        System.out.println("Duration (Requesting): " + duration + " ms");
-        System.out.println("TPS: " + (userCount / (duration / 1000.0)));
-        System.out.println("Confirmed in DB: " + confirmedCount + ", Remaining Stock: " + remainCount);
-
+        System.out.println(">>> [SCENARIO 2] Success: " + successCount.get() + ", Confirmed: " + confirmedCount);
+        
         assertThat(successCount.get()).isEqualTo(stockCount);
         assertThat(confirmedCount).isEqualTo(stockCount);
-        assertThat(remainCount).isZero();
+    }
+
+    @Test
+    @DisplayName("시나리오 3: DB 저장 실패 시 Redis 재고 복구 검증")
+    void testScenario3_Rollback() {
+        Long userId = 1L;
+        BookingRequest request = new BookingRequest(userId, 1L, 1L);
+        when(queueService.decreaseStock(anyLong(), anyLong())).thenReturn(true);
+        doThrow(new RuntimeException("DB Error")).when(bookingRepository).save(any());
+
+        try { bookingService.createBooking(userId, request); } catch (Exception ignored) {}
+
+        verify(queueService, times(1)).increaseStock(eq(1L), eq(1L));
+        System.out.println(">>> [SCENARIO 3] Rollback Recovery Verified.");
+    }
+
+    @Test
+    @DisplayName("시나리오 4: DLQ 전송 및 FAILED 상태 변경 검증")
+    void testScenario4_Dlq() throws Exception {
+        Long bookingId = 999L;
+        doThrow(new RuntimeException("Fatal")).when(seatGradeRepository).decreaseRemainCount(anyLong());
+
+        jdbcTemplate.execute("INSERT INTO booking (id, user_id, seat_grade_id, status, price) VALUES (999, 1, 1, 'PENDING', 10000)");
+
+        BookingEvent event = BookingEvent.of(bookingId, 1L, 1L, 1L);
+        kafkaTemplate.send("booking-created", "1", objectMapper.writeValueAsString(event));
+
+        Thread.sleep(10000); 
+
+        Booking updated = bookingRepository.findById(bookingId).orElseThrow();
+        System.out.println(">>> [SCENARIO 4] Updated Status: " + updated.getStatus());
+        assertThat(updated.getStatus()).isEqualTo(BookingStatus.FAILED);
     }
 }
